@@ -1,0 +1,41 @@
+Resources:
+  ConfirmTransferDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: cartos-confirm-transfer-dead-letter-queue
+      MessageRetentionPeriod: 1209600 # 14 days in retention message
+  ConfirmTransferQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: cartos-confirm-transfer-queue
+      VisibilityTimeout: 3600 # 1 hour
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt: [ConfirmTransferDeadLetterQueue, Arn]
+        maxReceiveCount: 3
+
+  ConfirmTransferQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Principal: "*"
+          Action: SQS:SendMessage
+          Resource: 
+            Fn::GetAtt: [ConfirmTransferQueue, Arn]
+          Condition:
+            ArnEquals:
+              aws:SourceArn:
+                Ref: ConfirmTransferSNS
+      Queues:
+        - Ref: ConfirmTransferQueue
+  SNSConfirmTransferQueueSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+        Protocol: sqs
+        Endpoint:   
+          Fn::GetAtt: [ConfirmTransferQueue, Arn]
+        TopicArn:
+          Ref: ConfirmTransferSNS

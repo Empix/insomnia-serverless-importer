@@ -1,0 +1,9 @@
+Resources:
+  SendTransferSNS:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: CartosSendTransfer
+  ConfirmTransferSNS:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: CartosConfirmTransfer

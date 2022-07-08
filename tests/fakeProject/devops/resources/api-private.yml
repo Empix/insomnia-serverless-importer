@@ -1,0 +1,17 @@
+Resources:
+  GetLimitFromAccountPrivateEndpoint:
+    Type: 'Custom::CreatePrivateEndpoint'
+    Properties:
+      ServiceToken: ${ssm:/cartos/infra/create-private-endpoint-lambda/arn}
+      path: '${self:custom.baseApi}/bases'
+      lambdaArn:
+        Fn::GetAtt: [ListFeesLambdaFunction, Arn]
+      method: 'get'
+  ShoFeeByIdEndpoint:
+    Type: 'Custom::CreatePrivateEndpoint'
+    Properties:
+      ServiceToken: ${ssm:/cartos/infra/create-private-endpoint-lambda/arn}
+      path: '${self:custom.baseApi}/bases/{id}/show'
+      lambdaArn:
+        Fn::GetAtt: [ShowFeeByIdLambdaFunction, Arn]
+      method: 'get'

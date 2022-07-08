@@ -1,0 +1,36 @@
+CreateUser:
+  handler: ${self:custom.funcDir}/users/CreateUsers.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/users
+        method: post
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+EditUser:
+  handler: ${self:custom.funcDir}/users/EditUsers.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/users
+        method: put
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+DeleteUser:
+  handler: ${self:custom.funcDir}/users/DeleteUsers.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/users/{id}
+        method: delete
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+ShowUser:
+  handler: ${self:custom.funcDir}/users/ShowUser.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/users/{id}
+        method: get
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}

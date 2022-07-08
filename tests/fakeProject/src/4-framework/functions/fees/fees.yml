@@ -1,0 +1,63 @@
+ListServices:
+  handler: ${self:custom.funcDir}/fees/ListService.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/bases/services
+        method: get
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+CreateFee:
+  handler: ${self:custom.funcDir}/fees/CreateFees.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/bases
+        method: post
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+EditFee:
+  handler: ${self:custom.funcDir}/fees/EditFees.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/bases
+        method: put
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+ListFees:
+  handler: ${self:custom.funcDir}/fees/ListFees.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/bases
+        method: get
+        cors:
+          origin: '*'
+        # authorizer: ${self:custom.ms-auth-authorizer}
+DeleteFee:
+  handler: ${self:custom.funcDir}/fees/DeleteFees.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/bases/{id}
+        method: delete
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+ShowFee:
+  handler: ${self:custom.funcDir}/fees/ShowFee.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/bases/{id}
+        method: get
+        cors:
+          origin: '*'
+        authorizer: ${self:custom.ms-auth-authorizer}
+ShowFeeById:
+  handler: ${self:custom.funcDir}/fees/ShowFeeById.handler
+  events:
+    - http:
+        path: ${self:custom.baseApi}/bases/{id}/show
+        method: get
+        cors:
+          origin: '*'
+        # authorizer: ${self:custom.ms-auth-authorizer}

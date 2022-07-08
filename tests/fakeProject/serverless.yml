@@ -1,0 +1,107 @@
+service: ms-${self:custom.serviceName}
+useDotenv: true
+provider:
+  name: aws
+  runtime: nodejs14.x
+  timeout: 30
+  memorySize: 512
+  stage: ${opt:stage, "${env:stage, 'local'}"}
+  region: ${opt:region, "${env:region, 'us-east-1'}"}
+  apiGateway:
+    restApiId: ${ssm:/cartos/infra/api-gateway/id}
+    restApiRootResourceId: ${ssm:/cartos/infra/api-gateway/root-resource-id}
+    restApiResources:
+      v1: ${ssm:/cartos/infra/api-gateway/v1-resource-id}
+      internal: ${ssm:/cartos/infra/api-gateway/internal-resource-id}
+  lambdaHashingVersion: '20201221'
+  vpc:
+    securityGroupIds:
+      - ${ssm:/cartos/infra/vpc/security-group-ids}
+    subnetIds: ${ssm:/cartos/infra/vpc/subnet-ids~split}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeTable
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:CreateTable
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:ListStreams
+          Resource: 'arn:aws:dynamodb:${aws:region}:${aws:accountId}:*'
+        - Effect: Allow
+          Action:
+            - sns:Publish
+            - sns:Subscribe
+          Resource: 'arn:aws:sns:${aws:region}:${aws:accountId}:*'
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: 'arn:aws:s3:::*/*'
+  environment:
+    STAGE: ${self:provider.stage}
+    DB_HOST: ${env:DB_HOST, ssm:/cartos/infra/aurora/host}
+    DB_PORT: ${env:DB_PORT, ssm:/cartos/infra/aurora/port}
+    DB_NAME: ${env:DB_NAME, 'bank-account-fees-bases'} #TODO
+    DB_USER: ${env:DB_USER, self:custom.auroraSecret.username}
+    DB_PASSWORD: ${env:DB_PASSWORD, self:custom.auroraSecret.password}
+    API_GATEWAY_URL: 'https://${env:API_GATEWAY_DOMAIN, ssm:/cartos/infra/api-gateway/domain}'
+    SNS_URL: ${env:SNS_URL, ssm:/cartos/bank-account-fees-plans/sns/feeRead-change${self:provider.stage}}
+    API_GATEWAY_PRIVATE_URL: 'https://${env:API_GATEWAY_PRIVATE_URL, ssm:/cartos/infra/api-gateway-private/domain}'
+    # EXAMPLE SNS + SQS
+    # EVENT_SEND_TRANSFER: ${self:custom.snsEvents.sendTransfer}
+    # EVENT_CONFIRM_TRANSFER: ${self:custom.snsEvents.confirmTransfer}
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-prune-plugin
+custom:
+  prune:
+    automatic: true
+    includeLayers: true
+    number: 3
+  serviceName: bank-account-fees # TODO
+  contextPath: bank-account-fees # TODO
+  funcDir: src/4-framework/functions
+  baseApi: ${self:custom.contextPath}/v1
+  baseApiPrivate: internal/${self:custom.contextPath}
+  auroraSecret: ${ssm:/aws/reference/secretsmanager/cartos-infra-aurora~true}
+  serverless-offline:
+    httpPort: 4005
+    lambdaPort: 3005
+    stage: local
+  account-authorizer:
+    type: COGNITO_USER_POOLS
+    authorizerId: ${ssm:/cartos/infra/api-gateway/authorizer-id}
+  ms-auth-authorizer:
+    type: TOKEN
+    authorizerId: ${ssm:/cartos/ms-auth/api-gateway/authorizer-id}
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    packager: 'yarn'
+    packagerOptions:
+      noFrozenLockfile: true
+    includeModules:
+      forceInclude:
+        - pg
+        - pg-hstore
+      forceExclude:
+        - aws-sdk
+  # EXAMPLE SNS + SQS
+  # snsEvents:
+  #   sendTransfer:
+  #     Ref: SendTransferSNS
+  #   confirmTransfer:
+  #     Ref: ConfirmTransferSNS
+functions:
+  - ${file(${self:custom.funcDir}/fees/fees.yml)}
+  - ${file(${self:custom.funcDir}/users/users.yml)}
+resources:
+  - ${file(./devops/resources/api-private.yml)}
+# EXAMPLE SNS + SQS
+# - ${file(./devops/resources/sns.yml)}
+# - ${file(./devops/resources/sqs.yml)}
